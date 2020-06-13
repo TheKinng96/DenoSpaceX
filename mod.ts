@@ -1,5 +1,5 @@
 import * as log from "https://deno.land/std/log/mod.ts";
-import * as _ from "https://deno.land/x/lodash@4.17.15-es/lodash.js"
+import * as _ from "https://deno.land/x/lodash@4.17.15-es/lodash.js";
 
 interface Launch {
   flightNumber: number;
@@ -10,35 +10,39 @@ interface Launch {
 
 const launches = new Map<number, Launch>();
 
-async function downloadLaunchData() {
-  log.info("Downloading launch data...")
+export async function downloadLaunchData() {
+  log.info("Downloading launch data...");
   const response = await fetch("http://api.spacexdata.com/v3/launches", {
-    method: "GET"
+    method: "GET",
   });
 
   if (!response.ok) {
-    log.warning("Problem downloading launch data")
-    throw new Error ("Lauch data download failed")
+    log.warning("Problem downloading launch data");
+    throw new Error("Lauch data download failed");
   }
 
   const launchData = await response.json();
   for (const launch of launchData) {
     const payloads = launch["rocket"]["second_stage"]["payloads"];
-    const customers = _.flatMap(payloads, (payload : any) => {
-      return payload["customers"]
-    })
+    const customers = _.flatMap(payloads, (payload: any) => {
+      return payload["customers"];
+    });
 
     const flightData = {
       flightNumber: launch["flight_number"],
       mission: launch["mission_name"],
       rocket: launch["rocket"]["rocket_name"],
-      customers: customers
+      customers: customers,
     };
 
-    launches.set(flightData.flightNumber, flightData)
+    launches.set(flightData.flightNumber, flightData);
 
     log.info(JSON.stringify(flightData));
   }
 }
 
-await downloadLaunchData();
+if (import.meta.main) {
+  await downloadLaunchData();
+  log.info(JSON.stringify(import.meta));
+  log.info(`Downloaded data for ${launches.size} SpaceX launches.`);
+}
